@@ -13,12 +13,17 @@ export function normalizePixels(input, size) {
   const w = Math.max(1, Math.round(width * scale)), h = Math.max(1, Math.round(height * scale));
   const ox = Math.floor((28 - w) / 2), oy = Math.floor((28 - h) / 2);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const sx = left + (x + 0.5) * width / w - 0.5;
-    const sy = top + (y + 0.5) * height / h - 0.5;
-    const x0 = Math.floor(sx), y0 = Math.floor(sy), dx = sx - x0, dy = sy - y0;
-    const value = (xx, yy) => xx < 0 || yy < 0 || xx >= size || yy >= size ? 0 : input[yy * size + xx];
-    result[(y + oy) * 28 + x + ox] = value(x0, y0) * (1 - dx) * (1 - dy)
-      + value(x0 + 1, y0) * dx * (1 - dy) + value(x0, y0 + 1) * (1 - dx) * dy + value(x0 + 1, y0 + 1) * dx * dy;
+    const xStart = left + x * width / w, xEnd = left + (x + 1) * width / w;
+    const yStart = top + y * height / h, yEnd = top + (y + 1) * height / h;
+    let sum = 0;
+    for (let sy = Math.floor(yStart); sy < Math.ceil(yEnd); sy++) {
+      for (let sx = Math.floor(xStart); sx < Math.ceil(xEnd); sx++) {
+        const area = Math.max(0, Math.min(xEnd, sx + 1) - Math.max(xStart, sx))
+          * Math.max(0, Math.min(yEnd, sy + 1) - Math.max(yStart, sy));
+        sum += input[sy * size + sx] * area;
+      }
+    }
+    result[(y + oy) * 28 + x + ox] = sum / ((xEnd - xStart) * (yEnd - yStart));
   }
   let mass = 0, mx = 0, my = 0;
   result.forEach((v, i) => { mass += v; mx += (i % 28) * v; my += Math.floor(i / 28) * v; });

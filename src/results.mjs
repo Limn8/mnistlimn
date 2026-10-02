@@ -61,7 +61,7 @@ export function createResults() {
       document.querySelector('#prediction-detail').textContent = `가까운 손글씨 7개 중 ${votes}개가 숫자 ${result.prediction}이에요.`;
       document.querySelector('#prediction-number').setAttribute('aria-label', `분류 결과 숫자 ${result.prediction}`);
       document.querySelector('#vote-value').innerHTML = `${votes}<span>/ 7</span>`;
-      document.querySelector('#latency').textContent = `${message.elapsed} ms · 3,000개 비교`;
+      document.querySelector('#latency').textContent = `${message.elapsed} ms · ${result.count.toLocaleString()}개 비교`;
       fillRanks(result.ranking);
       neighbors.replaceChildren();
       result.neighbors.forEach((item, index) => {

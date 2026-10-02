@@ -6,9 +6,9 @@ import { createResults, paintPixels } from './results.mjs';
 createIcons({ icons: { ScanLine, Pencil, Undo2, Redo2, Trash2, Download, ArrowUpRight, FlaskConical, ChevronDown, ExternalLink } });
 const worker = new Worker(new URL('./worker.mjs', import.meta.url), { type: 'module' });
 const results = createResults(); results.reset();
-let ready = false, revision = 0, displayedRevision = 0, activeStroke = false, timer, currentPixels = new Float32Array(784);
+let ready = false, busy = false, revision = 0, displayedRevision = 0, activeStroke = false, timer, currentPixels = new Float32Array(784);
 const status = document.querySelector('#status');
-const request = () => { if (ready && currentPixels.some(p => p > 0.08)) worker.postMessage({ type: 'predict', revision, pixels: currentPixels }); };
+const request = () => { if (ready && !busy && currentPixels.some(p => p > 0.08)) { busy = true; worker.postMessage({ type: 'predict', revision, pixels: currentPixels }); } };
 const drawing = createDrawing(document.querySelector('#draw'), (pixels, drawingStroke) => {
   currentPixels = pixels; revision++; activeStroke = drawingStroke;
   paintPixels(document.querySelector('#normalized'), pixels);
@@ -33,13 +33,15 @@ worker.onerror = event => fail(event.message || '비교 작업을 시작할 수 
 worker.onmessage = ({ data }) => {
   switch (data.type) {
     case 'ready':
-      ready = true; status.innerHTML = '<span class="status-dot"></span>3,000개 손글씨 · 준비 완료';
+      ready = true; status.innerHTML = `<span class="status-dot"></span>${data.count.toLocaleString()}개 손글씨 · 준비 완료`;
       samples.querySelectorAll('button').forEach(b => { b.disabled = false; }); request(); break;
     case 'sample': drawing.load(data.pixels); break;
     case 'result':
+      busy = false;
       if (data.revision === revision || (activeStroke && data.revision > displayedRevision)) {
         displayedRevision = data.revision; results.render(data);
       }
+      if (data.revision !== revision) request();
       break;
     case 'error': fail(data.message); break;
   }
