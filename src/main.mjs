@@ -2,6 +2,7 @@ import { createIcons, ScanLine, Pencil, Undo2, Redo2, Trash2, Download, ArrowUpR
 import './style.css';
 import { createDrawing } from './drawing.mjs';
 import { createResults, paintPixels } from './results.mjs';
+import { INK_THRESHOLD } from './pixels.mjs';
 
 createIcons({ icons: { ScanLine, Pencil, Undo2, Redo2, Trash2, Download, ArrowUpRight, FlaskConical, ChevronDown, ExternalLink } });
 const worker = new Worker(new URL('./worker.mjs', import.meta.url), { type: 'module' });
@@ -11,7 +12,7 @@ const status = document.querySelector('#status');
 const request = () => { if (ready && !busy && currentPixels.some(p => p > 0.08)) { busy = true; worker.postMessage({ type: 'predict', revision, pixels: currentPixels }); } };
 const drawing = createDrawing(document.querySelector('#draw'), (pixels, drawingStroke) => {
   currentPixels = pixels; revision++; activeStroke = drawingStroke;
-  paintPixels(document.querySelector('#normalized'), pixels);
+  paintPixels(document.querySelector('#normalized'), Uint8Array.from(pixels, v => v > INK_THRESHOLD ? 1 : 0));
   if (!pixels.some(p => p > 0.08)) { clearTimeout(timer); timer = undefined; displayedRevision = revision; results.reset(); }
   else if (!timer) timer = setTimeout(() => { timer = undefined; request(); }, 100);
 });

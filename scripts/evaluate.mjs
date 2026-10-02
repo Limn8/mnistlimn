@@ -14,7 +14,7 @@ for (const example of examples) {
   const predictionVotes = result.ranking.find(r => r.digit === result.prediction).votes;
   if (predictionVotes !== Math.max(...result.ranking.map(r => r.votes))) voteConsistency = false;
 }
-const report = { trainingCount: matcher.count, source: 'original MNIST test split, first 40 per digit', count: examples.length, correct, accuracy: correct / examples.length, meanMs: (performance.now() - started) / examples.length, voteConsistency, confusion };
+const report = { metric: 'binary Hamming distance', threshold: 0.2, trainingCount: matcher.count, source: 'original MNIST test split, first 40 per digit', count: examples.length, correct, accuracy: correct / examples.length, meanMs: (performance.now() - started) / examples.length, voteConsistency, confusion };
 await writeFile('public/data/evaluation.json', JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report));
 if (report.accuracy < 0.85 || !voteConsistency) process.exitCode = 1;

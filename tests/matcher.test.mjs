@@ -2,7 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
-import { createMatcher } from '../src/matcher.mjs';
+import { createMatcher, hammingDistance } from '../src/matcher.mjs';
+import { overlap } from '../src/pixels.mjs';
+
+test('Hamming distance counts differing binary pixels', () => {
+  assert.equal(hammingDistance([1, 0, 1, 0], [1, 1, 0, 0]), 2);
+  assert.equal(hammingDistance([1, 0], [1, 0]), 0);
+});
 
 test('real MNIST data yields all digit classes and exact reference similarity', async () => {
   const bytes = new Uint8Array(gunzipSync(await readFile('public/data/mnist-full.bin.gz')));
@@ -16,4 +22,9 @@ test('real MNIST data yields all digit classes and exact reference similarity', 
   assert.equal(result.ranking.reduce((sum, r) => sum + r.votes, 0), 7);
   const votes = result.ranking.find(r => r.digit === result.prediction).votes;
   assert.equal(votes, Math.max(...result.ranking.map(r => r.votes)));
+  result.neighbors.forEach(neighbor => {
+    const stats = overlap(pixels, neighbor.pixels);
+    assert.equal(neighbor.distance, stats.inputOnly + stats.referenceOnly);
+    assert.ok(Number.isInteger(neighbor.distance));
+  });
 });

@@ -37,16 +37,13 @@ export function normalizePixels(input, size) {
   return centered;
 }
 
-export function similarity(input, reference, distance) {
-  let energy = 0;
-  for (let i = 0; i < input.length; i++) energy += input[i] ** 2 + reference[i] ** 2;
-  return energy ? Math.max(0, 1 - distance / Math.sqrt(energy)) * 100 : 0;
-}
+export const INK_THRESHOLD = 0.2;
+export const pixelAgreement = distance => (1 - distance / 784) * 100;
 
 export function overlap(input, reference) {
   let shared = 0, inputOnly = 0, referenceOnly = 0;
   for (let i = 0; i < input.length; i++) {
-    const a = input[i] > 0.2, b = reference[i] > 0.2;
+    const a = input[i] > INK_THRESHOLD, b = reference[i] > INK_THRESHOLD;
     if (a && b) shared++;
     else if (a) inputOnly++;
     else if (b) referenceOnly++;

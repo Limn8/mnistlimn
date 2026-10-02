@@ -51,10 +51,18 @@ assert.equal(download.suggestedFilename(), 'digit-lab-handwriting.png');
 const canvasInk = await page.locator('#comparison').evaluate(canvas => Array.from(canvas.getContext('2d').getImageData(0, 0, 28, 28).data).filter((v, i) => i % 4 !== 3 && v < 240).length);
 assert.ok(canvasInk > 30);
 const sizes = [];
-for (const width of [375, 768, 1280]) {
+for (const width of [375, 768, 1280, 3440]) {
   await page.setViewportSize({ width, height: 900 });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
   assert.equal(overflow, false, `Overflow at ${width}`);
+  const gutters = await page.evaluate(() => {
+    const drawing = document.querySelector('.drawing-section').getBoundingClientRect();
+    const result = document.querySelector('.results-section').getBoundingClientRect();
+    const label = document.querySelector('.stroke-control label').getBoundingClientRect();
+    const samples = document.querySelector('#neighbors').getBoundingClientRect();
+    return { left: label.left - drawing.left, right: result.right - samples.right };
+  });
+  assert.ok(gutters.left >= 15 && gutters.right >= 15, `Missing inner gutter at ${width}`);
   await page.screenshot({ path: `qa/viewport-${width}.png`, fullPage: true });
   sizes.push({ width, overflow });
 }

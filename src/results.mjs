@@ -1,4 +1,4 @@
-import { overlap } from './pixels.mjs';
+import { overlap, INK_THRESHOLD } from './pixels.mjs';
 
 export function paintPixels(canvas, pixels) {
   const ctx = canvas.getContext('2d'), image = ctx.createImageData(28, 28);
@@ -14,17 +14,16 @@ export function createResults() {
     const reference = selected.pixels, stats = overlap(input, reference);
     const ctx = document.querySelector('#comparison').getContext('2d'), image = ctx.createImageData(28, 28);
     input.forEach((v, i) => {
-      const r = reference[i], a = v > 0.2, b = r > 0.2;
+      const r = reference[i], a = v > INK_THRESHOLD, b = r > INK_THRESHOLD;
       let color = [255, 255, 255];
       if (a && b && mode === 'overlay') color = [23, 32, 35];
       else if (a && !b) color = [8, 127, 121];
       else if (b && !a) color = [205, 78, 107];
-      else if (mode === 'difference' && Math.abs(v - r) > 0.15) color = v > r ? [8, 127, 121] : [205, 78, 107];
       image.data.set([...color, 255], i * 4);
     });
     ctx.putImageData(image, 0, 0);
-    document.querySelector('#overlap-title').textContent = `숫자 ${selected.digit} 예시와 획 ${stats.percent}% 겹침`;
-    document.querySelector('#overlap-detail').textContent = `두 이미지에 획이 있는 ${stats.shared + stats.inputOnly + stats.referenceOnly}개 픽셀 중 ${stats.shared}개가 겹쳐요. 내 획만 있는 곳은 ${stats.inputOnly}개, 예시에만 있는 곳은 ${stats.referenceOnly}개예요.`;
+    document.querySelector('#overlap-title').textContent = `해밍거리 ${selected.distance} · 784픽셀 중 ${selected.distance}개 다름`;
+    document.querySelector('#overlap-detail').textContent = `숫자 ${selected.digit} 예시와 획 ${stats.percent}% 겹침. 내 획만 있는 곳 ${stats.inputOnly}개 + 예시에만 있는 곳 ${stats.referenceOnly}개 = 서로 다른 픽셀 ${stats.inputOnly + stats.referenceOnly}개입니다.`;
   };
   document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {
     mode = button.dataset.view;
@@ -66,9 +65,9 @@ export function createResults() {
       neighbors.replaceChildren();
       result.neighbors.forEach((item, index) => {
         const button = document.createElement('button'); button.className = `neighbor ${index === 0 ? 'selected' : ''}`;
-        button.setAttribute('aria-label', `숫자 ${item.digit} 예시, 모양 유사도 ${item.score.toFixed(0)}퍼센트`);
+        button.setAttribute('aria-label', `숫자 ${item.digit} 예시, 해밍거리 ${item.distance}`);
         button.setAttribute('aria-pressed', String(index === 0));
-        button.innerHTML = `<canvas width="28" height="28"></canvas><strong>숫자 ${item.digit}</strong><span>${item.score.toFixed(0)}%</span>`;
+        button.innerHTML = `<canvas width="28" height="28"></canvas><strong>숫자 ${item.digit}</strong><span>거리 ${item.distance}</span>`;
         paintPixels(button.querySelector('canvas'), item.pixels);
         button.addEventListener('click', () => {
           selected = item;
