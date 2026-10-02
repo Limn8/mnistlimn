@@ -1,0 +1,9 @@
+{
+  "source": "https://github.com/cazala/mnist",
+  "package": "mnist@1.1.0",
+  "samples": 3000,
+  "perDigit": 300,
+  "heldOut": 400,
+  "preprocessing": "20px bounding box, 28px canvas, center of mass",
+  "license": "MIT (distribution package)"
+}
